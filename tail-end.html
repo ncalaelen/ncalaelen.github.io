@@ -4,74 +4,64 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Tail End</title>
-<meta name="description" content="Combien de temps te reste-t-il vraiment avec tes parents ? Un simulateur inspiré de « The Tail End » de Tim Urban.">
+<meta name="description" content="Combien de temps te reste-t-il vraiment avec ton parent ? Un simulateur inspiré de « The Tail End » de Tim Urban.">
 <style>
   :root {
     --bg: #faf8f5; --card: #ffffff; --text: #1f1d1a; --muted: #6b665f; --line: #e6e1d9;
-    --kid: #c92a2a;      /* days together as a kid */
-    --adult: #f08c00;    /* days together as an adult (visits) */
-    --left: #2f9e44;     /* days still ahead */
-    --left-soft: #d3f0da;
-    --empty: #ece7df;
-    --accent-soft: #fff1e8;
+    --used: #c9c3b9; --left: #f08c00;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #141312; --card: #1d1c1a; --text: #f1eee9; --muted: #a39e96; --line: #2f2d2a;
-      --kid: #ff6b6b; --adult: #ffc078; --left: #51cf66; --left-soft: #1f3a26; --empty: #2c2a27; --accent-soft: #2a1d15;
+      --used: #4a4641; --left: #ffa94d;
     }
   }
   :root[data-theme="dark"] {
     --bg: #141312; --card: #1d1c1a; --text: #f1eee9; --muted: #a39e96; --line: #2f2d2a;
-    --kid: #ff6b6b; --adult: #ffc078; --left: #51cf66; --left-soft: #1f3a26; --empty: #2c2a27; --accent-soft: #2a1d15;
+    --used: #4a4641; --left: #ffa94d;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
     font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-  main { max-width: 920px; margin: 0 auto; padding: 24px 16px 64px; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
   .topbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
   .btn { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px;
-    padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+    padding: 6px 12px; cursor: pointer; font: inherit; font-size: 14px; }
   .btn[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
   h1 { font-size: clamp(28px, 5vw, 40px); margin: 0 0 4px; letter-spacing: -0.02em; }
   .sub { color: var(--muted); margin: 0 0 24px; }
   .sub a { color: inherit; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
-  h2 { font-size: 19px; margin: 0 0 6px; }
-  .lead { color: var(--muted); margin: 0 0 14px; font-size: 15px; }
-  .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; }
+  h2 { font-size: 19px; margin: 0 0 14px; }
+  .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 28px; }
   .field label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
   .row { display: flex; gap: 10px; align-items: center; }
-  input[type=range] { flex: 1; min-width: 0; accent-color: var(--kid); }
+  input[type=range] { flex: 1; min-width: 0; accent-color: var(--left); }
   input[type=number] { width: 72px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px;
     background: var(--bg); color: var(--text); font: inherit; font-variant-numeric: tabular-nums; }
-  .check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); margin-top: 14px; }
-  .headline { font-size: clamp(19px, 3.2vw, 24px); line-height: 1.4; margin: 0 0 16px; }
-  .headline .used { color: var(--kid); }
-  .headline .left { color: var(--left); }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-  .stat { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-  .stat .v { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
-  .stat .l { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .stat.kid .v { color: var(--kid); } .stat.adult .v { color: var(--adult); } .stat.left .v { color: var(--left); }
-  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin: 0 0 10px; }
-  .legend span::before { content: ""; display: inline-block; width: 11px; height: 11px; border-radius: 2px;
-    margin-right: 6px; vertical-align: -1px; background: var(--c); border: 1px solid var(--b, transparent); }
-  canvas { width: 100%; display: block; }
-  .bar { height: 30px; border-radius: 6px; overflow: hidden; display: flex; background: var(--empty); margin: 6px 0 4px; }
-  .bar div { height: 100%; }
-  .barlabels { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
-  .note { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
-  .parent-block + .parent-block { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
-  .ptitle { font-weight: 600; margin: 0 0 4px; }
+  .headline { font-size: clamp(20px, 3.6vw, 26px); line-height: 1.4; margin: 0 0 18px; }
+  .headline b { color: var(--left); }
+  .squares { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; max-width: 460px; margin: 0 auto; }
+  .squares div { aspect-ratio: 1; border-radius: 4px; background: var(--used); }
+  .squares div.left { background: var(--left); }
+  .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 20px; font-size: 14px; color: var(--muted); margin: 16px 0 0; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+    margin-right: 6px; vertical-align: -1px; background: var(--c); }
+  .legend strong { color: var(--text); font-variant-numeric: tabular-nums; }
+  .big { text-align: center; margin: 4px 0 14px; }
+  .big .v { font-size: 56px; font-weight: 800; color: var(--left); line-height: 1; font-variant-numeric: tabular-nums; }
+  .big .l { color: var(--muted); margin-top: 6px; }
+  .dots { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+  .dots i { width: 14px; height: 14px; border-radius: 50%; background: var(--left); display: block; }
+  .note { font-size: 13px; color: var(--muted); margin: 14px 0 0; text-align: center; }
   footer { color: var(--muted); font-size: 13px; text-align: center; margin-top: 30px; }
 </style>
 </head>
 <body>
 <main>
-  <div class="topbar">
-    <button class="btn" type="button" data-lang="fr">FR</button>
-    <button class="btn" type="button" data-lang="en">EN</button>
+  <div class="topbar" role="group" aria-label="Langue / Language">
+    <button class="btn" type="button" data-lang="fr" aria-pressed="true">Français</button>
+    <button class="btn" type="button" data-lang="en" aria-pressed="false">English</button>
     <button class="btn" type="button" id="themeBtn" data-i18n="theme"></button>
   </div>
   <h1>The Tail End</h1>
@@ -82,44 +72,19 @@
   <section class="card">
     <h2 data-i18n="inputsTitle"></h2>
     <div class="grid-inputs" id="inputs"></div>
-    <label class="check"><input type="checkbox" id="twoParents" checked> <span data-i18n="twoParents"></span></label>
   </section>
 
   <section class="card">
     <p class="headline" id="headline"></p>
-    <div class="stats" id="stats"></div>
+    <div class="squares" id="squares" role="img"></div>
+    <div class="legend" id="legend"></div>
+    <p class="note" data-i18n="squaresNote"></p>
   </section>
 
   <section class="card">
-    <h2 data-i18n="lifeTitle"></h2>
-    <p class="lead" data-i18n="lifeLead"></p>
-    <div class="legend" id="lifeLegend"></div>
-    <canvas id="lifeCanvas"></canvas>
-    <p class="note" id="lifeNote"></p>
-  </section>
-
-  <section class="card">
-    <h2 data-i18n="daysTitle"></h2>
-    <p class="lead" data-i18n="daysLead"></p>
-    <div class="legend" id="daysLegend"></div>
-    <div id="daysBlocks"></div>
-  </section>
-
-  <section class="card">
-    <h2 data-i18n="barTitle"></h2>
-    <div id="bars"></div>
-  </section>
-
-  <section class="card">
-    <h2 data-i18n="visitsTitle"></h2>
-    <p class="lead" data-i18n="visitsLead"></p>
-    <canvas id="visitsCanvas"></canvas>
-  </section>
-
-  <section class="card">
-    <h2 data-i18n="leversTitle"></h2>
-    <div class="stats" id="levers"></div>
-    <p class="note" data-i18n="leversNote"></p>
+    <div class="big"><div class="v" id="visitsLeft"></div><div class="l" data-i18n="visitsLeft"></div></div>
+    <div class="dots" id="dots"></div>
+    <p class="note" data-i18n="dotsNote"></p>
   </section>
 
   <footer data-i18n="footer"></footer>
@@ -130,136 +95,102 @@
   const T = {
     fr: {
       theme: "Thème",
-      subtitle: "Combien de temps te reste-t-il vraiment avec tes parents ? Inspiré de",
+      subtitle: "Combien de temps te reste-t-il vraiment avec ton parent ? Inspiré de",
       subtitle2: "de Tim Urban (Wait But Why).",
       inputsTitle: "Ta situation",
       myAge: "Mon âge", leftHome: "Âge auquel j’ai quitté la maison",
-      p1Age: "Âge du parent 1", p2Age: "Âge du parent 2", lifeExp: "Mes parents vivront jusqu’à",
+      pAge: "Âge de mon parent", lifeExp: "Il ou elle vivra jusqu’à",
       visits: "Visites par an", days: "Jours par visite",
-      twoParents: "Simuler deux parents séparément",
-      p1: "Parent 1", p2: "Parent 2", parent: "Ton parent",
-      y: "ans", d: "j",
-      headline: (used, left, visits, who) =>
-        `Tu as déjà passé <span class="used">${used} %</span> de tout ton temps en présence de ${who}. ` +
-        `Il en reste environ <span class="left">${left} jours</span>, soit <span class="left">${visits} visites</span>.`,
-      headlineNone: "Avec ces chiffres, il ne reste plus de jours ensemble. Change les curseurs pour explorer.",
-      whoOne: "ton parent", whoP1: "ton parent 1",
-      sKid: "jours ensemble enfant (à la maison)", sAdult: "jours ensemble adulte (visites)",
-      sLeft: "jours ensemble encore à venir", sVisits: "visites restantes", sPct: "du temps total déjà utilisé",
-      sAge: "ton âge quand ce sera fini",
-      lifeTitle: "Ta vie en années",
-      lifeLead: "Un carré = une année de ta vie, jusqu’à 90 ans. La plupart du temps avec tes parents se trouve dans les premières cases.",
-      lgKidY: "Années à la maison", lgAdultY: "Années depuis ton départ", lgLeftY: "Années restantes avec eux", lgAfter: "Après",
-      lifeNote: (a, b) => `Tu as vécu ${a} ans chez eux. Ensuite, le temps passé ensemble se compte en visites. Le dernier carré vert : ${b} ans.`,
-      daysTitle: "Chaque jour passé ensemble, toute une vie",
-      daysLead: "Un carré = un jour en présence de tes parents. Les carrés colorés sont déjà vécus. Les carrés verts sont tout ce qui reste.",
-      lgKid: "Enfant, à la maison", lgAdult: "Adulte, en visite", lgLeft: "Encore à venir",
-      blockNote: (kid, adult, left) => `${kid} jours enfant · ${adult} jours adulte · ${left} jours à venir`,
-      barTitle: "La même chose en une barre",
-      used: "utilisé", left: "restant",
-      visitsTitle: "Chaque point = une visite à venir",
-      visitsLead: "C’est le message de l’article : ce nombre paraît infini, mais on peut le compter.",
-      leversTitle: "Ce que tu peux changer",
-      leversNote: "Même espérance de vie. Seuls tes choix changent.",
-      lvVisit: n => `+1 visite par an (${n})`, lvDays: n => `+2 jours par visite (${n})`,
-      lvDouble: "Doubler les deux", lvWeekly: "Habiter plus près : 1 jour par semaine",
-      lvResult: n => `→ ${n} jours`,
-      none: "Plus rien avec ces chiffres.",
-      footer: "Hypothèses : tu vivais chaque jour avec tes parents jusqu’à ton départ ; tes visites passées suivaient le même rythme qu’aujourd’hui. Un modèle approximatif, pas une prédiction."
+      headline: (u, l) => `Tu as déjà utilisé <b>${u} %</b> de ton temps avec ton parent. Il t’en reste <b>${l} %</b>.`,
+      headlineNone: "Avec ces chiffres, il ne reste plus de temps ensemble.",
+      squaresAria: (u, l) => `${u} carrés gris sur 100 déjà utilisés, ${l} carrés orange restants`,
+      lgUsed: "Déjà utilisé", lgLeft: "Ce qu’il reste",
+      squaresNote: "Un carré = 1 % de tout le temps que vous passerez ensemble dans votre vie.",
+      visitsLeft: "visites restantes",
+      dotsNote: "Un point = une visite. Ce nombre paraît infini, mais on peut le compter.",
+      footer: "Hypothèses : tu vivais chaque jour avec ton parent jusqu’à ton départ ; tes visites passées suivaient le même rythme qu’aujourd’hui. Un modèle approximatif, pas une prédiction.",
+      pct: x => x + " %"
     },
     en: {
       theme: "Theme",
-      subtitle: "How much time do you really have left with your parents? Inspired by Tim Urban’s",
+      subtitle: "How much time do you really have left with your parent? Inspired by Tim Urban’s",
       subtitle2: "on Wait But Why.",
       inputsTitle: "Your situation",
       myAge: "My age", leftHome: "Age I left home",
-      p1Age: "Parent 1 age", p2Age: "Parent 2 age", lifeExp: "Parents will live until",
+      pAge: "My parent’s age", lifeExp: "They will live until",
       visits: "Visits per year", days: "Days per visit",
-      twoParents: "Simulate two parents separately",
-      p1: "Parent 1", p2: "Parent 2", parent: "Your parent",
-      y: "y", d: "d",
-      headline: (used, left, visits, who) =>
-        `You have already spent <span class="used">${used}%</span> of all your in-person time with ${who}. ` +
-        `About <span class="left">${left} days</span> are left, over <span class="left">${visits} visits</span>.`,
-      headlineNone: "With these numbers, there are no days together left. Adjust the sliders to explore.",
-      whoOne: "your parent", whoP1: "parent 1",
-      sKid: "days together as a kid (at home)", sAdult: "days together as an adult (visits)",
-      sLeft: "days together still ahead", sVisits: "visits left", sPct: "of the total already used",
-      sAge: "your age when it ends",
-      lifeTitle: "Your life in years",
-      lifeLead: "One square = one year of your life, up to 90. Most of your time with your parents sits in the first squares.",
-      lgKidY: "Years at home", lgAdultY: "Years since you left", lgLeftY: "Years left with them", lgAfter: "After",
-      lifeNote: (a, b) => `You lived ${a} years with them. After that, time together is counted in visits. Last green square: age ${b}.`,
-      daysTitle: "Every day together, over a lifetime",
-      daysLead: "One square = one day with your parents. Coloured squares are already lived. Green squares are all that’s left.",
-      lgKid: "As a kid, at home", lgAdult: "As an adult, visiting", lgLeft: "Still ahead",
-      blockNote: (kid, adult, left) => `${kid} days as a kid · ${adult} days as an adult · ${left} days ahead`,
-      barTitle: "The same thing as one bar",
-      used: "used", left: "left",
-      visitsTitle: "Each dot = one visit still ahead",
-      visitsLead: "This is the article’s point: the number feels endless, but you can count it.",
-      leversTitle: "What you can change",
-      leversNote: "Same life expectancy. Only your choices change.",
-      lvVisit: n => `+1 visit per year (${n})`, lvDays: n => `+2 days per visit (${n})`,
-      lvDouble: "Double both", lvWeekly: "Move closer: 1 day every week",
-      lvResult: n => `→ ${n} days`,
-      none: "None left with these numbers.",
-      footer: "Assumptions: you lived with your parents every day until you left home; past visits followed the same rhythm as today. A rough model, not a prediction."
+      headline: (u, l) => `You have already used <b>${u}%</b> of your time with your parent. <b>${l}%</b> is left.`,
+      headlineNone: "With these numbers, there is no time together left.",
+      squaresAria: (u, l) => `${u} grey squares out of 100 already used, ${l} orange squares left`,
+      lgUsed: "Already used", lgLeft: "What’s left",
+      squaresNote: "One square = 1% of all the time you will ever spend together.",
+      visitsLeft: "visits left",
+      dotsNote: "One dot = one visit. The number feels endless, but you can count it.",
+      footer: "Assumptions: you lived with your parent every day until you left home; past visits followed the same rhythm as today. A rough model, not a prediction.",
+      pct: x => x + "%"
     }
   };
 
-  let lang = "fr";
-  try { const s = localStorage.getItem("tailEndLang"); if (s === "en" || s === "fr") lang = s; } catch (e) {}
+  let lang = "fr"; // French by default
   const t = k => T[lang][k];
 
   const fields = [
     { id: "myAge", min: 1, max: 90, value: 45 },
     { id: "leftHome", min: 10, max: 40, value: 18 },
-    { id: "p1Age", min: 30, max: 110, value: 72 },
-    { id: "p2Age", min: 30, max: 110, value: 70 },
+    { id: "pAge", min: 30, max: 110, value: 72 },
     { id: "lifeExp", min: 60, max: 110, value: 88 },
     { id: "visits", min: 0, max: 52, value: 3 },
     { id: "days", min: 1, max: 60, value: 4 }
   ];
-  const state = {};
+  const s = {};
   const wrap = document.getElementById("inputs");
   fields.forEach(f => {
-    state[f.id] = f.value;
+    s[f.id] = f.value;
     const el = document.createElement("div");
-    el.className = "field"; el.id = "f_" + f.id;
+    el.className = "field";
     el.innerHTML = `<label for="r_${f.id}" data-i18n="${f.id}"></label>
       <div class="row"><input type="range" id="r_${f.id}" min="${f.min}" max="${f.max}" value="${f.value}">
-      <input type="number" id="n_${f.id}" min="${f.min}" max="${f.max}" value="${f.value}"></div>`;
+      <input type="number" min="${f.min}" max="${f.max}" value="${f.value}" aria-label="${f.id}"></div>`;
     wrap.appendChild(el);
     const r = el.querySelector("input[type=range]"), n = el.querySelector("input[type=number]");
-    r.addEventListener("input", () => { n.value = r.value; state[f.id] = +r.value; render(); });
+    r.addEventListener("input", () => { n.value = r.value; s[f.id] = +r.value; render(); });
     n.addEventListener("input", () => {
       let v = +n.value; if (n.value === "" || isNaN(v)) return;
-      v = Math.max(f.min, Math.min(f.max, v)); r.value = v; state[f.id] = v; render();
+      v = Math.max(f.min, Math.min(f.max, v)); r.value = v; s[f.id] = v; render();
     });
   });
-  const twoBox = document.getElementById("twoParents");
-  twoBox.addEventListener("change", render);
 
   const fmt = n => Math.round(n).toLocaleString(lang === "fr" ? "fr-FR" : "en-US");
-  const pct = n => n.toLocaleString(lang === "fr" ? "fr-FR" : "en-US", { maximumFractionDigits: 1 });
-  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const dec = n => n.toLocaleString(lang === "fr" ? "fr-FR" : "en-US", { maximumFractionDigits: 1 });
 
-  function calc(parentAge) {
-    const s = state;
+  function render() {
+    // Time together, measured in days so childhood and visits can be compared.
     const leftHome = Math.min(s.leftHome, s.myAge);
-    const yearsLeft = Math.max(0, s.lifeExp - parentAge);
     const perYear = Math.min(365, s.visits * s.days);
-    const kidDays = leftHome * 365;
-    const adultDays = Math.max(0, s.myAge - leftHome) * perYear;
-    const leftDays = yearsLeft * perYear;
-    const total = kidDays + adultDays + leftDays;
-    return {
-      leftHome, yearsLeft, kidDays, adultDays, leftDays, total,
-      leftVisits: yearsLeft * s.visits,
-      usedPct: total ? (kidDays + adultDays) / total * 100 : 100,
-      endAge: s.myAge + yearsLeft
-    };
+    const yearsLeft = Math.max(0, s.lifeExp - s.pAge);
+    const past = leftHome * 365 + (s.myAge - leftHome) * perYear;
+    const future = yearsLeft * perYear;
+    const total = past + future;
+    const leftPct = total ? future / total * 100 : 0;
+    const usedPct = 100 - leftPct;
+    const visitsLeft = yearsLeft * s.visits;
+
+    // 100 squares: grey = used, orange = left (at least 1 orange if any time is left)
+    let leftSq = Math.round(leftPct);
+    if (future > 0 && leftSq === 0) leftSq = 1;
+    const usedSq = 100 - leftSq;
+
+    document.getElementById("headline").innerHTML = future > 0
+      ? t("headline")(dec(usedPct), dec(leftPct)) : t("headlineNone");
+    const sq = document.getElementById("squares");
+    sq.innerHTML = Array.from({ length: 100 }, (_, i) => `<div${i >= usedSq ? ' class="left"' : ""}></div>`).join("");
+    sq.setAttribute("aria-label", t("squaresAria")(usedSq, leftSq));
+    document.getElementById("legend").innerHTML =
+      `<span style="--c:var(--used)">${t("lgUsed")} · <strong>${t("pct")(dec(usedPct))}</strong></span>` +
+      `<span style="--c:var(--left)">${t("lgLeft")} · <strong>${t("pct")(dec(leftPct))}</strong></span>`;
+
+    document.getElementById("visitsLeft").textContent = fmt(visitsLeft);
+    document.getElementById("dots").innerHTML = "<i></i>".repeat(Math.min(Math.round(visitsLeft), 2000));
   }
 
   function applyText() {
@@ -268,163 +199,16 @@
       const v = t(el.dataset.i18n); if (typeof v === "string") el.textContent = v;
     });
     document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
-    const legend = (items) => items.map(([k, c, b]) => `<span style="--c:var(${c});${b ? `--b:var(${b})` : ""}">${t(k)}</span>`).join("");
-    document.getElementById("lifeLegend").innerHTML =
-      legend([["lgKidY", "--kid"], ["lgAdultY", "--adult"], ["lgLeftY", "--left"], ["lgAfter", "--empty", "--line"]]);
-    document.getElementById("daysLegend").innerHTML =
-      legend([["lgKid", "--kid"], ["lgAdult", "--adult"], ["lgLeft", "--left"]]);
-  }
-
-  function render() {
-    const two = twoBox.checked;
-    document.getElementById("f_p2Age").style.display = two ? "" : "none";
-    const parents = [{ name: two ? t("p1") : t("parent"), age: state.p1Age }];
-    if (two) parents.push({ name: t("p2"), age: state.p2Age });
-    parents.forEach(p => p.r = calc(p.age));
-    const f = parents[0].r;
-
-    // Headline
-    document.getElementById("headline").innerHTML = f.leftDays <= 0 ? t("headlineNone")
-      : t("headline")(Math.round(f.usedPct), fmt(f.leftDays), fmt(f.leftVisits), two ? t("whoP1") : t("whoOne"));
-
-    // Stats
-    const stat = (cls, v, l) => `<div class="stat ${cls}"><div class="v">${v}</div><div class="l">${l}</div></div>`;
-    const suf = two ? ` · ${t("p1")}` : "";
-    document.getElementById("stats").innerHTML =
-      stat("kid", fmt(f.kidDays), t("sKid")) +
-      stat("adult", fmt(f.adultDays), t("sAdult") + suf) +
-      stat("left", fmt(f.leftDays), t("sLeft") + suf) +
-      stat("", pct(f.usedPct) + (lang === "fr" ? " %" : "%"), t("sPct") + suf) +
-      stat("left", fmt(f.leftVisits), t("sVisits") + suf) +
-      stat("", fmt(f.endAge), t("sAge") + suf);
-
-    // Life in years (based on whichever parent lives on longest)
-    const maxEnd = Math.max(...parents.map(p => p.r.endAge));
-    drawLife(f.leftHome, state.myAge, maxEnd);
-    document.getElementById("lifeNote").textContent = t("lifeNote")(fmt(f.leftHome), fmt(maxEnd));
-
-    // Days grid per parent
-    const blocks = document.getElementById("daysBlocks");
-    blocks.innerHTML = parents.map((p, i) => `<div class="parent-block">
-        ${two ? `<p class="ptitle">${p.name}</p>` : ""}
-        <canvas id="days_${i}"></canvas>
-        <p class="note">${t("blockNote")(fmt(p.r.kidDays), fmt(p.r.adultDays), fmt(p.r.leftDays))}</p></div>`).join("");
-    parents.forEach((p, i) => drawDays("days_" + i, p.r));
-
-    // Bars
-    document.getElementById("bars").innerHTML = parents.map(p => {
-      const r = p.r, tot = r.total || 1;
-      const k = r.kidDays / tot * 100, a = r.adultDays / tot * 100, l = r.leftDays / tot * 100;
-      const pc = x => pct(x) + (lang === "fr" ? " %" : "%");
-      return `<div class="parent-block">${two ? `<p class="ptitle">${p.name}</p>` : ""}
-        <div class="bar"><div style="width:${k}%;background:var(--kid)"></div><div style="width:${a}%;background:var(--adult)"></div><div style="width:${l}%;background:var(--left)"></div></div>
-        <div class="barlabels"><span>${pc(k + a)} ${t("used")}</span><span>${pc(l)} ${t("left")}</span></div></div>`;
-    }).join("");
-
-    // Visits dots
-    drawDots("visitsCanvas", parents.map(p => Math.round(p.r.leftVisits)));
-
-    // Levers
-    const base = f.leftDays;
-    const lever = (label, v, d) => {
-      const x = f.yearsLeft * Math.min(365, v * d), diff = x - base;
-      return stat("left", (diff >= 0 ? "+" : "") + fmt(diff), `${label} ${t("lvResult")(fmt(x))}`);
-    };
-    document.getElementById("levers").innerHTML =
-      lever(t("lvVisit")(state.visits + 1), state.visits + 1, state.days) +
-      lever(t("lvDays")(state.days + 2), state.visits, state.days + 2) +
-      lever(t("lvDouble"), state.visits * 2, state.days * 2) +
-      lever(t("lvWeekly"), 52, 1);
-  }
-
-  function setup(cv, h) {
-    const w = width(cv);
-    const dpr = window.devicePixelRatio || 1;
-    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.height = h + "px";
-    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
-    return ctx;
-  }
-  const width = cv => cv.clientWidth || cv.parentElement.clientWidth - 40;
-
-  // 90 squares, one per year of life
-  function drawLife(leftHome, myAge, endAge) {
-    const cv = document.getElementById("lifeCanvas");
-    const w = width(cv), years = Math.max(90, Math.ceil(endAge));
-    const cols = w < 500 ? 10 : 15, gap = 4;
-    const cell = Math.floor((w - gap * (cols - 1)) / cols);
-    const step = cell + gap, rows = Math.ceil(years / cols);
-    const ctx = setup(cv, rows * step - gap);
-    for (let i = 0; i < years; i++) {
-      const c = i < leftHome ? "--kid" : i < myAge ? "--adult" : i < endAge ? "--left" : "--empty";
-      ctx.fillStyle = css(c);
-      const x = (i % cols) * step, y = Math.floor(i / cols) * step;
-      ctx.fillRect(x, y, cell, cell);
-      if (cell >= 22) {
-        ctx.fillStyle = c === "--empty" ? css("--muted") : "rgba(255,255,255,.9)";
-        ctx.font = `${Math.min(13, cell / 2.6)}px sans-serif`;
-        ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.fillText(i + 1, x + cell / 2, y + cell / 2);
-      }
-    }
-  }
-
-  // Every day together: kid days, adult days, days left, in reading order
-  function drawDays(id, r) {
-    const cv = document.getElementById(id);
-    const w = width(cv);
-    const total = Math.round(r.kidDays) + Math.round(r.adultDays) + Math.round(r.leftDays);
-    if (!total) { setup(cv, 20); return; }
-    // pick a cell size so the grid fills roughly a 4:3 area, minimum 2px
-    const targetH = Math.min(520, w * 0.75);
-    let step = Math.max(2, Math.floor(Math.sqrt((w * targetH) / total)));
-    step = Math.min(step, 14);
-    const gap = step >= 5 ? 1 : 0, cell = step - gap;
-    const cols = Math.floor((w + gap) / step);
-    const rows = Math.ceil(total / cols);
-    const ctx = setup(cv, rows * step);
-    const kid = Math.round(r.kidDays), adult = Math.round(r.adultDays);
-    const cKid = css("--kid"), cAdult = css("--adult"), cLeft = css("--left");
-    for (let i = 0; i < total; i++) {
-      ctx.fillStyle = i < kid ? cKid : i < kid + adult ? cAdult : cLeft;
-      ctx.fillRect((i % cols) * step, Math.floor(i / cols) * step, cell, cell);
-    }
-  }
-
-  function drawDots(id, counts) {
-    const cv = document.getElementById(id);
-    const w = width(cv), cell = 14, gap = 4, step = cell + gap, groupGap = 16;
-    const cols = Math.max(1, Math.floor((w + gap) / step));
-    const rowsPer = counts.map(n => Math.ceil(n / cols));
-    const total = counts.reduce((a, b) => a + b, 0);
-    if (!total) {
-      const ctx = setup(cv, 22); ctx.fillStyle = css("--muted"); ctx.font = "14px sans-serif";
-      ctx.fillText(t("none"), 0, 15); return;
-    }
-    const h = rowsPer.reduce((a, b) => a + b, 0) * step + (counts.length - 1) * groupGap;
-    const ctx = setup(cv, h);
-    let y0 = 0;
-    counts.forEach((n, gi) => {
-      ctx.fillStyle = css("--left");
-      for (let i = 0; i < n; i++) {
-        const x = (i % cols) * step, y = y0 + Math.floor(i / cols) * step;
-        ctx.beginPath(); ctx.arc(x + cell / 2, y + cell / 2, cell / 2, 0, Math.PI * 2); ctx.fill();
-      }
-      y0 += rowsPer[gi] * step + groupGap;
-    });
   }
 
   document.querySelectorAll("[data-lang]").forEach(b => b.addEventListener("click", () => {
-    lang = b.dataset.lang;
-    try { localStorage.setItem("tailEndLang", lang); } catch (e) {}
-    applyText(); render();
+    lang = b.dataset.lang; applyText(); render();
   }));
   document.getElementById("themeBtn").addEventListener("click", () => {
     const root = document.documentElement;
     const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
     root.dataset.theme = dark ? "light" : "dark";
-    applyText(); render();
   });
-  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 100); });
 
   applyText(); render();
 })();
