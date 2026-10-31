@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Tail End</title>
+<meta name="description" content="How much time do you really have left with your parents? A simulator inspired by Tim Urban's 'The Tail End'.">
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --text: #1f1d1a;
+    --muted: #6b665f;
+    --line: #e6e1d9;
+    --past: #d8d2c8;
+    --left: #d9480f;
+    --left2: #1971c2;
+    --accent-soft: #fff1e8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141312; --card: #1d1c1a; --text: #f1eee9; --muted: #a39e96;
+      --line: #2f2d2a; --past: #3a3733; --left: #ff8a4c; --left2: #5ab0ff; --accent-soft: #2a1d15;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141312; --card: #1d1c1a; --text: #f1eee9; --muted: #a39e96;
+    --line: #2f2d2a; --past: #3a3733; --left: #ff8a4c; --left2: #5ab0ff; --accent-soft: #2a1d15;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: clamp(28px, 5vw, 40px); margin: 0 0 4px; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  .sub a { color: inherit; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+  .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; }
+  .field label { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+  .field label b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  input[type=range] { flex: 1; accent-color: var(--left); }
+  input[type=number] {
+    width: 72px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--text); font: inherit; font-variant-numeric: tabular-nums;
+  }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); margin-top: 6px; }
+  h2 { font-size: 18px; margin: 0 0 14px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+  .stat { border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .stat .v { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .stat .l { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .stat.hl { background: var(--accent-soft); border-color: transparent; }
+  .stat.hl .v { color: var(--left); }
+  .headline { font-size: clamp(18px, 3vw, 22px); line-height: 1.4; margin: 0 0 18px; }
+  .headline strong { color: var(--left); }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--muted); margin: 0 0 10px; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+  canvas { width: 100%; display: block; }
+  .bar { height: 26px; border-radius: 6px; overflow: hidden; display: flex; background: var(--past); margin: 8px 0 6px; }
+  .bar div { height: 100%; }
+  .note { font-size: 13px; color: var(--muted); }
+  .parent-block + .parent-block { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .theme-btn { float: right; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+  footer { color: var(--muted); font-size: 13px; text-align: center; margin-top: 30px; }
+</style>
+</head>
+<body>
+<main>
+  <button class="theme-btn" id="themeBtn" type="button">Theme</button>
+  <h1>The Tail End</h1>
+  <p class="sub">How much time do you really have left with your parents? Inspired by Tim Urban's
+    <a href="https://waitbutwhy.com/2015/12/the-tail-end.html" target="_blank" rel="noopener">“The Tail End”</a> on Wait But Why.</p>
+
+  <section class="card">
+    <h2>Your situation</h2>
+    <div class="grid-inputs" id="inputs"></div>
+    <label class="check"><input type="checkbox" id="twoParents" checked> Simulate two parents separately</label>
+  </section>
+
+  <section class="card">
+    <p class="headline" id="headline"></p>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section class="card">
+    <h2>Every day you'll ever spend together</h2>
+    <div class="legend">
+      <span style="--c: var(--past)">Already lived</span>
+      <span style="--c: var(--left)">Still ahead</span>
+    </div>
+    <div id="bars"></div>
+    <p class="note">The bar is your whole lifetime of in-person days together. The grey part is already behind you.</p>
+  </section>
+
+  <section class="card">
+    <h2>Each square = one day together still ahead</h2>
+    <canvas id="daysCanvas" aria-label="Grid of remaining days together"></canvas>
+    <p class="note" id="daysNote"></p>
+  </section>
+
+  <section class="card">
+    <h2>Each dot = one visit still ahead</h2>
+    <canvas id="visitsCanvas" aria-label="Grid of remaining visits"></canvas>
+    <p class="note">This is the point of the article: the number feels endless, but you can count it.</p>
+  </section>
+
+  <section class="card">
+    <h2>What can change the numbers</h2>
+    <div class="stats" id="levers"></div>
+    <p class="note">Same life expectancy. Only your choices change.</p>
+  </section>
+
+  <footer>Assumptions: you lived with your parents every day until you left home; past visits followed the same rhythm as today. A rough model, not a prediction.</footer>
+</main>
+
+<script>
+(function () {
+  const fields = [
+    { id: "myAge", label: "My age", min: 1, max: 90, value: 45, unit: " y" },
+    { id: "leftHome", label: "Age I left home", min: 10, max: 40, value: 18, unit: " y" },
+    { id: "p1Age", label: "Parent 1 age", min: 30, max: 110, value: 72, unit: " y" },
+    { id: "p2Age", label: "Parent 2 age", min: 30, max: 110, value: 70, unit: " y", two: true },
+    { id: "lifeExp", label: "Parents will live until", min: 60, max: 110, value: 88, unit: " y" },
+    { id: "visits", label: "Visits per year", min: 0, max: 52, value: 3, unit: "" },
+    { id: "days", label: "Days per visit", min: 1, max: 60, value: 4, unit: " d" }
+  ];
+  const wrap = document.getElementById("inputs");
+  const state = {};
+  fields.forEach(f => {
+    state[f.id] = f.value;
+    const el = document.createElement("div");
+    el.className = "field"; el.id = "f_" + f.id;
+    el.innerHTML = `<label for="r_${f.id}">${f.label}</label>
+      <div class="row"><input type="range" id="r_${f.id}" min="${f.min}" max="${f.max}" value="${f.value}">
+      <input type="number" id="n_${f.id}" min="${f.min}" max="${f.max}" value="${f.value}"></div>`;
+    wrap.appendChild(el);
+    const r = el.querySelector("input[type=range]"), n = el.querySelector("input[type=number]");
+    r.addEventListener("input", () => { n.value = r.value; state[f.id] = +r.value; render(); });
+    n.addEventListener("input", () => {
+      let v = +n.value; if (isNaN(v)) return;
+      v = Math.max(f.min, Math.min(f.max, v)); r.value = v; state[f.id] = v; render();
+    });
+  });
+  const twoBox = document.getElementById("twoParents");
+  twoBox.addEventListener("change", render);
+
+  const fmt = n => Math.round(n).toLocaleString();
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  function calc(parentAge) {
+    const s = state;
+    const leftHome = Math.min(s.leftHome, s.myAge);
+    const yearsLeft = Math.max(0, s.lifeExp - parentAge);
+    const daysPerYear = Math.min(365, s.visits * s.days);
+    const childhoodDays = leftHome * 365;
+    const adultPastDays = Math.max(0, s.myAge - leftHome) * daysPerYear;
+    const pastDays = childhoodDays + adultPastDays;
+    const futureDays = yearsLeft * daysPerYear;
+    const futureVisits = yearsLeft * s.visits;
+    const total = pastDays + futureDays;
+    return {
+      yearsLeft, futureDays, futureVisits, pastDays, total,
+      usedPct: total ? pastDays / total * 100 : 100,
+      myAgeThen: s.myAge + yearsLeft
+    };
+  }
+
+  function render() {
+    const two = twoBox.checked;
+    document.getElementById("f_p2Age").style.display = two ? "" : "none";
+    const parents = [{ name: two ? "Parent 1" : "Your parent", age: state.p1Age, color: "--left" }];
+    if (two) parents.push({ name: "Parent 2", age: state.p2Age, color: "--left2" });
+    parents.forEach(p => p.r = calc(p.age));
+    const main = parents.reduce((a, b) => (b.r.futureDays > a.r.futureDays ? b : a));
+    const first = parents[0].r;
+
+    // Headline
+    const hl = document.getElementById("headline");
+    if (first.futureDays <= 0) {
+      hl.innerHTML = `With these numbers, there are <strong>no in-person days left</strong> to plan. Adjust the sliders to explore.`;
+    } else {
+      hl.innerHTML = `You have already used <strong>${first.usedPct.toFixed(0)}%</strong> of your in-person time with ${parents[0].name.toLowerCase()}.
+        You're in the tail end: about <strong>${fmt(first.futureDays)} days</strong> left, over <strong>${fmt(first.futureVisits)} visits</strong>.`;
+    }
+
+    // Stats
+    const st = document.getElementById("stats");
+    st.innerHTML = "";
+    const add = (v, l, h) => st.insertAdjacentHTML("beforeend", `<div class="stat ${h ? "hl" : ""}"><div class="v">${v}</div><div class="l">${l}</div></div>`);
+    parents.forEach(p => {
+      const suf = two ? ` · ${p.name}` : "";
+      add(fmt(p.r.futureDays), "days together left" + suf, true);
+      add(fmt(p.r.futureVisits), "visits left" + suf);
+    });
+    add(fmt(first.yearsLeft), `years left${two ? " · Parent 1" : ""}`);
+    add(fmt(first.myAgeThen), `your age when it ends${two ? " · Parent 1" : ""}`);
+    add((first.futureDays / 365).toFixed(1), "full years of time, if added up");
+    add(fmt(first.pastDays), "days already spent together");
+
+    // Bars
+    const bars = document.getElementById("bars");
+    bars.innerHTML = parents.map(p => `
+      <div class="parent-block">
+        <div class="note"><b style="color:var(--text)">${p.name}</b> · ${p.r.usedPct.toFixed(1)}% used · ${(100 - p.r.usedPct).toFixed(1)}% left</div>
+        <div class="bar"><div style="width:${p.r.usedPct}%;background:var(--past)"></div><div style="width:${100 - p.r.usedPct}%;background:var(${p.color})"></div></div>
+      </div>`).join("");
+
+    // Grids
+    drawGrid("daysCanvas", parents.map(p => ({ n: p.r.futureDays, color: css(p.color) })), 9, 2);
+    document.getElementById("daysNote").textContent =
+      `${parents.map(p => `${p.name}: ${fmt(p.r.futureDays)} squares`).join(" · ")}. Compare: you've already spent ${fmt(first.pastDays)} days together.`;
+    drawGrid("visitsCanvas", parents.map(p => ({ n: p.r.futureVisits, color: css(p.color) })), 16, 4, true);
+
+    // Levers
+    const lv = document.getElementById("levers");
+    const base = first.futureDays;
+    const lever = (label, visits, days) => {
+      const d = Math.max(0, state.lifeExp - parents[0].age) * Math.min(365, visits * days);
+      const diff = d - base;
+      return `<div class="stat"><div class="v">${diff >= 0 ? "+" : ""}${fmt(diff)}</div><div class="l">${label} → ${fmt(d)} days</div></div>`;
+    };
+    lv.innerHTML =
+      lever(`+1 visit per year (${state.visits + 1})`, state.visits + 1, state.days) +
+      lever(`+2 days per visit (${state.days + 2})`, state.visits, state.days + 2) +
+      lever("Double both", state.visits * 2, state.days * 2) +
+      lever("Move closer: 1 day every week", 52, 1);
+  }
+
+  function drawGrid(id, groups, cell, gap, round) {
+    const cv = document.getElementById(id);
+    const w = cv.parentElement.clientWidth - 40;
+    const step = cell + gap;
+    const cols = Math.max(1, Math.floor((w + gap) / step));
+    const total = groups.reduce((s, g) => s + Math.round(g.n), 0);
+    const rowsPer = groups.map(g => Math.ceil(Math.round(g.n) / cols));
+    const groupGap = 14;
+    const rows = rowsPer.reduce((a, b) => a + b, 0);
+    const h = Math.max(step, rows * step + (groups.length - 1) * groupGap);
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = w * dpr; cv.height = h * dpr; cv.style.height = h + "px";
+    const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+    if (!total) { ctx.fillStyle = css("--muted"); ctx.font = "14px sans-serif"; ctx.fillText("None left with these numbers.", 0, 14); cv.style.height = "24px"; return; }
+    let y0 = 0;
+    groups.forEach((g, gi) => {
+      ctx.fillStyle = g.color;
+      const n = Math.round(g.n);
+      for (let i = 0; i < n; i++) {
+        const x = (i % cols) * step, y = y0 + Math.floor(i / cols) * step;
+        if (round) { ctx.beginPath(); ctx.arc(x + cell / 2, y + cell / 2, cell / 2, 0, Math.PI * 2); ctx.fill(); }
+        else ctx.fillRect(x, y, cell, cell);
+      }
+      y0 += rowsPer[gi] * step + groupGap;
+    });
+  }
+
+  // Theme toggle
+  const btn = document.getElementById("themeBtn");
+  btn.addEventListener("click", () => {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    render();
+  });
+
+  window.addEventListener("resize", render);
+  render();
+})();
+</script>
+</body>
+</html>
