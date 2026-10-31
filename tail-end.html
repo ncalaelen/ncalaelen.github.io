@@ -1,273 +1,216 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Tail End</title>
-<meta name="description" content="How much time do you really have left with your parents? A simulator inspired by Tim Urban's 'The Tail End'.">
+<meta name="description" content="Combien de temps te reste-t-il vraiment avec ton parent ? Un simulateur inspiré de « The Tail End » de Tim Urban.">
 <style>
   :root {
-    --bg: #faf8f5;
-    --card: #ffffff;
-    --text: #1f1d1a;
-    --muted: #6b665f;
-    --line: #e6e1d9;
-    --past: #d8d2c8;
-    --left: #d9480f;
-    --left2: #1971c2;
-    --accent-soft: #fff1e8;
+    --bg: #faf8f5; --card: #ffffff; --text: #1f1d1a; --muted: #6b665f; --line: #e6e1d9;
+    --used: #c9c3b9; --left: #f08c00;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #141312; --card: #1d1c1a; --text: #f1eee9; --muted: #a39e96;
-      --line: #2f2d2a; --past: #3a3733; --left: #ff8a4c; --left2: #5ab0ff; --accent-soft: #2a1d15;
+      --bg: #141312; --card: #1d1c1a; --text: #f1eee9; --muted: #a39e96; --line: #2f2d2a;
+      --used: #4a4641; --left: #ffa94d;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #141312; --card: #1d1c1a; --text: #f1eee9; --muted: #a39e96;
-    --line: #2f2d2a; --past: #3a3733; --left: #ff8a4c; --left2: #5ab0ff; --accent-soft: #2a1d15;
+    --bg: #141312; --card: #1d1c1a; --text: #f1eee9; --muted: #a39e96; --line: #2f2d2a;
+    --used: #4a4641; --left: #ffa94d;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
-  main { max-width: 920px; margin: 0 auto; padding: 32px 16px 64px; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  .topbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
+  .btn { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px;
+    padding: 6px 12px; cursor: pointer; font: inherit; font-size: 14px; }
+  .btn[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
   h1 { font-size: clamp(28px, 5vw, 40px); margin: 0 0 4px; letter-spacing: -0.02em; }
-  .sub { color: var(--muted); margin: 0 0 28px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
   .sub a { color: inherit; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
-  .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; }
-  .field label { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
-  .field label b { color: var(--text); font-variant-numeric: tabular-nums; }
+  h2 { font-size: 19px; margin: 0 0 14px; }
+  .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 28px; }
+  .field label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
   .row { display: flex; gap: 10px; align-items: center; }
-  input[type=range] { flex: 1; accent-color: var(--left); }
-  input[type=number] {
-    width: 72px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px;
-    background: var(--bg); color: var(--text); font: inherit; font-variant-numeric: tabular-nums;
-  }
-  .check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); margin-top: 6px; }
-  h2 { font-size: 18px; margin: 0 0 14px; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
-  .stat { border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
-  .stat .v { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
-  .stat .l { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .stat.hl { background: var(--accent-soft); border-color: transparent; }
-  .stat.hl .v { color: var(--left); }
-  .headline { font-size: clamp(18px, 3vw, 22px); line-height: 1.4; margin: 0 0 18px; }
-  .headline strong { color: var(--left); }
-  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--muted); margin: 0 0 10px; }
-  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
-  canvas { width: 100%; display: block; }
-  .bar { height: 26px; border-radius: 6px; overflow: hidden; display: flex; background: var(--past); margin: 8px 0 6px; }
-  .bar div { height: 100%; }
-  .note { font-size: 13px; color: var(--muted); }
-  .parent-block + .parent-block { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--line); }
-  .theme-btn { float: right; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+  input[type=range] { flex: 1; min-width: 0; accent-color: var(--left); }
+  input[type=number] { width: 72px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--text); font: inherit; font-variant-numeric: tabular-nums; }
+  .headline { font-size: clamp(20px, 3.6vw, 26px); line-height: 1.4; margin: 0 0 18px; }
+  .headline b { color: var(--left); }
+  .squares { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; max-width: 460px; margin: 0 auto; }
+  .squares div { aspect-ratio: 1; border-radius: 4px; background: var(--used); }
+  .squares div.left { background: var(--left); }
+  .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 20px; font-size: 14px; color: var(--muted); margin: 16px 0 0; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+    margin-right: 6px; vertical-align: -1px; background: var(--c); }
+  .legend strong { color: var(--text); font-variant-numeric: tabular-nums; }
+  .big { text-align: center; margin: 4px 0 14px; }
+  .big .v { font-size: 56px; font-weight: 800; color: var(--left); line-height: 1; font-variant-numeric: tabular-nums; }
+  .big .l { color: var(--muted); margin-top: 6px; }
+  .dots { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+  .dots i { width: 14px; height: 14px; border-radius: 50%; background: var(--left); display: block; }
+  .note { font-size: 13px; color: var(--muted); margin: 14px 0 0; text-align: center; }
   footer { color: var(--muted); font-size: 13px; text-align: center; margin-top: 30px; }
 </style>
 </head>
 <body>
 <main>
-  <button class="theme-btn" id="themeBtn" type="button">Theme</button>
+  <div class="topbar" role="group" aria-label="Langue / Language">
+    <button class="btn" type="button" data-lang="fr" aria-pressed="true">Français</button>
+    <button class="btn" type="button" data-lang="en" aria-pressed="false">English</button>
+    <button class="btn" type="button" id="themeBtn" data-i18n="theme"></button>
+  </div>
   <h1>The Tail End</h1>
-  <p class="sub">How much time do you really have left with your parents? Inspired by Tim Urban's
-    <a href="https://waitbutwhy.com/2015/12/the-tail-end.html" target="_blank" rel="noopener">“The Tail End”</a> on Wait But Why.</p>
+  <p class="sub"><span data-i18n="subtitle"></span>
+    <a href="https://waitbutwhy.com/2015/12/the-tail-end.html" target="_blank" rel="noopener">“The Tail End”</a>
+    <span data-i18n="subtitle2"></span></p>
 
   <section class="card">
-    <h2>Your situation</h2>
+    <h2 data-i18n="inputsTitle"></h2>
     <div class="grid-inputs" id="inputs"></div>
-    <label class="check"><input type="checkbox" id="twoParents" checked> Simulate two parents separately</label>
   </section>
 
   <section class="card">
     <p class="headline" id="headline"></p>
-    <div class="stats" id="stats"></div>
+    <div class="squares" id="squares" role="img"></div>
+    <div class="legend" id="legend"></div>
+    <p class="note" data-i18n="squaresNote"></p>
   </section>
 
   <section class="card">
-    <h2>Every day you'll ever spend together</h2>
-    <div class="legend">
-      <span style="--c: var(--past)">Already lived</span>
-      <span style="--c: var(--left)">Still ahead</span>
-    </div>
-    <div id="bars"></div>
-    <p class="note">The bar is your whole lifetime of in-person days together. The grey part is already behind you.</p>
+    <div class="big"><div class="v" id="visitsLeft"></div><div class="l" data-i18n="visitsLeft"></div></div>
+    <div class="dots" id="dots"></div>
+    <p class="note" data-i18n="dotsNote"></p>
   </section>
 
-  <section class="card">
-    <h2>Each square = one day together still ahead</h2>
-    <canvas id="daysCanvas" aria-label="Grid of remaining days together"></canvas>
-    <p class="note" id="daysNote"></p>
-  </section>
-
-  <section class="card">
-    <h2>Each dot = one visit still ahead</h2>
-    <canvas id="visitsCanvas" aria-label="Grid of remaining visits"></canvas>
-    <p class="note">This is the point of the article: the number feels endless, but you can count it.</p>
-  </section>
-
-  <section class="card">
-    <h2>What can change the numbers</h2>
-    <div class="stats" id="levers"></div>
-    <p class="note">Same life expectancy. Only your choices change.</p>
-  </section>
-
-  <footer>Assumptions: you lived with your parents every day until you left home; past visits followed the same rhythm as today. A rough model, not a prediction.</footer>
+  <footer data-i18n="footer"></footer>
 </main>
 
 <script>
 (function () {
+  const T = {
+    fr: {
+      theme: "Thème",
+      subtitle: "Combien de temps te reste-t-il vraiment avec ton parent ? Inspiré de",
+      subtitle2: "de Tim Urban (Wait But Why).",
+      inputsTitle: "Ta situation",
+      myAge: "Mon âge", leftHome: "Âge auquel j’ai quitté la maison",
+      pAge: "Âge de mon parent", lifeExp: "Il ou elle vivra jusqu’à",
+      visits: "Visites par an", days: "Jours par visite",
+      headline: (u, l) => `Tu as déjà utilisé <b>${u} %</b> de ton temps avec ton parent. Il t’en reste <b>${l} %</b>.`,
+      headlineNone: "Avec ces chiffres, il ne reste plus de temps ensemble.",
+      squaresAria: (u, l) => `${u} carrés gris sur 100 déjà utilisés, ${l} carrés orange restants`,
+      lgUsed: "Déjà utilisé", lgLeft: "Ce qu’il reste",
+      squaresNote: "Un carré = 1 % de tout le temps que vous passerez ensemble dans votre vie.",
+      visitsLeft: "visites restantes",
+      dotsNote: "Un point = une visite. Ce nombre paraît infini, mais on peut le compter.",
+      footer: "Hypothèses : tu vivais chaque jour avec ton parent jusqu’à ton départ ; tes visites passées suivaient le même rythme qu’aujourd’hui. Un modèle approximatif, pas une prédiction.",
+      pct: x => x + " %"
+    },
+    en: {
+      theme: "Theme",
+      subtitle: "How much time do you really have left with your parent? Inspired by Tim Urban’s",
+      subtitle2: "on Wait But Why.",
+      inputsTitle: "Your situation",
+      myAge: "My age", leftHome: "Age I left home",
+      pAge: "My parent’s age", lifeExp: "They will live until",
+      visits: "Visits per year", days: "Days per visit",
+      headline: (u, l) => `You have already used <b>${u}%</b> of your time with your parent. <b>${l}%</b> is left.`,
+      headlineNone: "With these numbers, there is no time together left.",
+      squaresAria: (u, l) => `${u} grey squares out of 100 already used, ${l} orange squares left`,
+      lgUsed: "Already used", lgLeft: "What’s left",
+      squaresNote: "One square = 1% of all the time you will ever spend together.",
+      visitsLeft: "visits left",
+      dotsNote: "One dot = one visit. The number feels endless, but you can count it.",
+      footer: "Assumptions: you lived with your parent every day until you left home; past visits followed the same rhythm as today. A rough model, not a prediction.",
+      pct: x => x + "%"
+    }
+  };
+
+  let lang = "fr"; // French by default
+  const t = k => T[lang][k];
+
   const fields = [
-    { id: "myAge", label: "My age", min: 1, max: 90, value: 45, unit: " y" },
-    { id: "leftHome", label: "Age I left home", min: 10, max: 40, value: 18, unit: " y" },
-    { id: "p1Age", label: "Parent 1 age", min: 30, max: 110, value: 72, unit: " y" },
-    { id: "p2Age", label: "Parent 2 age", min: 30, max: 110, value: 70, unit: " y", two: true },
-    { id: "lifeExp", label: "Parents will live until", min: 60, max: 110, value: 88, unit: " y" },
-    { id: "visits", label: "Visits per year", min: 0, max: 52, value: 3, unit: "" },
-    { id: "days", label: "Days per visit", min: 1, max: 60, value: 4, unit: " d" }
+    { id: "myAge", min: 1, max: 90, value: 45 },
+    { id: "leftHome", min: 10, max: 40, value: 18 },
+    { id: "pAge", min: 30, max: 110, value: 72 },
+    { id: "lifeExp", min: 60, max: 110, value: 88 },
+    { id: "visits", min: 0, max: 52, value: 3 },
+    { id: "days", min: 1, max: 60, value: 4 }
   ];
+  const s = {};
   const wrap = document.getElementById("inputs");
-  const state = {};
   fields.forEach(f => {
-    state[f.id] = f.value;
+    s[f.id] = f.value;
     const el = document.createElement("div");
-    el.className = "field"; el.id = "f_" + f.id;
-    el.innerHTML = `<label for="r_${f.id}">${f.label}</label>
+    el.className = "field";
+    el.innerHTML = `<label for="r_${f.id}" data-i18n="${f.id}"></label>
       <div class="row"><input type="range" id="r_${f.id}" min="${f.min}" max="${f.max}" value="${f.value}">
-      <input type="number" id="n_${f.id}" min="${f.min}" max="${f.max}" value="${f.value}"></div>`;
+      <input type="number" min="${f.min}" max="${f.max}" value="${f.value}" aria-label="${f.id}"></div>`;
     wrap.appendChild(el);
     const r = el.querySelector("input[type=range]"), n = el.querySelector("input[type=number]");
-    r.addEventListener("input", () => { n.value = r.value; state[f.id] = +r.value; render(); });
+    r.addEventListener("input", () => { n.value = r.value; s[f.id] = +r.value; render(); });
     n.addEventListener("input", () => {
-      let v = +n.value; if (isNaN(v)) return;
-      v = Math.max(f.min, Math.min(f.max, v)); r.value = v; state[f.id] = v; render();
+      let v = +n.value; if (n.value === "" || isNaN(v)) return;
+      v = Math.max(f.min, Math.min(f.max, v)); r.value = v; s[f.id] = v; render();
     });
   });
-  const twoBox = document.getElementById("twoParents");
-  twoBox.addEventListener("change", render);
 
-  const fmt = n => Math.round(n).toLocaleString();
-  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-
-  function calc(parentAge) {
-    const s = state;
-    const leftHome = Math.min(s.leftHome, s.myAge);
-    const yearsLeft = Math.max(0, s.lifeExp - parentAge);
-    const daysPerYear = Math.min(365, s.visits * s.days);
-    const childhoodDays = leftHome * 365;
-    const adultPastDays = Math.max(0, s.myAge - leftHome) * daysPerYear;
-    const pastDays = childhoodDays + adultPastDays;
-    const futureDays = yearsLeft * daysPerYear;
-    const futureVisits = yearsLeft * s.visits;
-    const total = pastDays + futureDays;
-    return {
-      yearsLeft, futureDays, futureVisits, pastDays, total,
-      usedPct: total ? pastDays / total * 100 : 100,
-      myAgeThen: s.myAge + yearsLeft
-    };
-  }
+  const fmt = n => Math.round(n).toLocaleString(lang === "fr" ? "fr-FR" : "en-US");
+  const dec = n => n.toLocaleString(lang === "fr" ? "fr-FR" : "en-US", { maximumFractionDigits: 1 });
 
   function render() {
-    const two = twoBox.checked;
-    document.getElementById("f_p2Age").style.display = two ? "" : "none";
-    const parents = [{ name: two ? "Parent 1" : "Your parent", age: state.p1Age, color: "--left" }];
-    if (two) parents.push({ name: "Parent 2", age: state.p2Age, color: "--left2" });
-    parents.forEach(p => p.r = calc(p.age));
-    const main = parents.reduce((a, b) => (b.r.futureDays > a.r.futureDays ? b : a));
-    const first = parents[0].r;
+    // Time together, measured in days so childhood and visits can be compared.
+    const leftHome = Math.min(s.leftHome, s.myAge);
+    const perYear = Math.min(365, s.visits * s.days);
+    const yearsLeft = Math.max(0, s.lifeExp - s.pAge);
+    const past = leftHome * 365 + (s.myAge - leftHome) * perYear;
+    const future = yearsLeft * perYear;
+    const total = past + future;
+    const leftPct = total ? future / total * 100 : 0;
+    const usedPct = 100 - leftPct;
+    const visitsLeft = yearsLeft * s.visits;
 
-    // Headline
-    const hl = document.getElementById("headline");
-    if (first.futureDays <= 0) {
-      hl.innerHTML = `With these numbers, there are <strong>no in-person days left</strong> to plan. Adjust the sliders to explore.`;
-    } else {
-      hl.innerHTML = `You have already used <strong>${first.usedPct.toFixed(0)}%</strong> of your in-person time with ${parents[0].name.toLowerCase()}.
-        You're in the tail end: about <strong>${fmt(first.futureDays)} days</strong> left, over <strong>${fmt(first.futureVisits)} visits</strong>.`;
-    }
+    // 100 squares: grey = used, orange = left (at least 1 orange if any time is left)
+    let leftSq = Math.round(leftPct);
+    if (future > 0 && leftSq === 0) leftSq = 1;
+    const usedSq = 100 - leftSq;
 
-    // Stats
-    const st = document.getElementById("stats");
-    st.innerHTML = "";
-    const add = (v, l, h) => st.insertAdjacentHTML("beforeend", `<div class="stat ${h ? "hl" : ""}"><div class="v">${v}</div><div class="l">${l}</div></div>`);
-    parents.forEach(p => {
-      const suf = two ? ` · ${p.name}` : "";
-      add(fmt(p.r.futureDays), "days together left" + suf, true);
-      add(fmt(p.r.futureVisits), "visits left" + suf);
-    });
-    add(fmt(first.yearsLeft), `years left${two ? " · Parent 1" : ""}`);
-    add(fmt(first.myAgeThen), `your age when it ends${two ? " · Parent 1" : ""}`);
-    add((first.futureDays / 365).toFixed(1), "full years of time, if added up");
-    add(fmt(first.pastDays), "days already spent together");
+    document.getElementById("headline").innerHTML = future > 0
+      ? t("headline")(dec(usedPct), dec(leftPct)) : t("headlineNone");
+    const sq = document.getElementById("squares");
+    sq.innerHTML = Array.from({ length: 100 }, (_, i) => `<div${i >= usedSq ? ' class="left"' : ""}></div>`).join("");
+    sq.setAttribute("aria-label", t("squaresAria")(usedSq, leftSq));
+    document.getElementById("legend").innerHTML =
+      `<span style="--c:var(--used)">${t("lgUsed")} · <strong>${t("pct")(dec(usedPct))}</strong></span>` +
+      `<span style="--c:var(--left)">${t("lgLeft")} · <strong>${t("pct")(dec(leftPct))}</strong></span>`;
 
-    // Bars
-    const bars = document.getElementById("bars");
-    bars.innerHTML = parents.map(p => `
-      <div class="parent-block">
-        <div class="note"><b style="color:var(--text)">${p.name}</b> · ${p.r.usedPct.toFixed(1)}% used · ${(100 - p.r.usedPct).toFixed(1)}% left</div>
-        <div class="bar"><div style="width:${p.r.usedPct}%;background:var(--past)"></div><div style="width:${100 - p.r.usedPct}%;background:var(${p.color})"></div></div>
-      </div>`).join("");
-
-    // Grids
-    drawGrid("daysCanvas", parents.map(p => ({ n: p.r.futureDays, color: css(p.color) })), 9, 2);
-    document.getElementById("daysNote").textContent =
-      `${parents.map(p => `${p.name}: ${fmt(p.r.futureDays)} squares`).join(" · ")}. Compare: you've already spent ${fmt(first.pastDays)} days together.`;
-    drawGrid("visitsCanvas", parents.map(p => ({ n: p.r.futureVisits, color: css(p.color) })), 16, 4, true);
-
-    // Levers
-    const lv = document.getElementById("levers");
-    const base = first.futureDays;
-    const lever = (label, visits, days) => {
-      const d = Math.max(0, state.lifeExp - parents[0].age) * Math.min(365, visits * days);
-      const diff = d - base;
-      return `<div class="stat"><div class="v">${diff >= 0 ? "+" : ""}${fmt(diff)}</div><div class="l">${label} → ${fmt(d)} days</div></div>`;
-    };
-    lv.innerHTML =
-      lever(`+1 visit per year (${state.visits + 1})`, state.visits + 1, state.days) +
-      lever(`+2 days per visit (${state.days + 2})`, state.visits, state.days + 2) +
-      lever("Double both", state.visits * 2, state.days * 2) +
-      lever("Move closer: 1 day every week", 52, 1);
+    document.getElementById("visitsLeft").textContent = fmt(visitsLeft);
+    document.getElementById("dots").innerHTML = "<i></i>".repeat(Math.min(Math.round(visitsLeft), 2000));
   }
 
-  function drawGrid(id, groups, cell, gap, round) {
-    const cv = document.getElementById(id);
-    const w = cv.parentElement.clientWidth - 40;
-    const step = cell + gap;
-    const cols = Math.max(1, Math.floor((w + gap) / step));
-    const total = groups.reduce((s, g) => s + Math.round(g.n), 0);
-    const rowsPer = groups.map(g => Math.ceil(Math.round(g.n) / cols));
-    const groupGap = 14;
-    const rows = rowsPer.reduce((a, b) => a + b, 0);
-    const h = Math.max(step, rows * step + (groups.length - 1) * groupGap);
-    const dpr = window.devicePixelRatio || 1;
-    cv.width = w * dpr; cv.height = h * dpr; cv.style.height = h + "px";
-    const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, w, h);
-    if (!total) { ctx.fillStyle = css("--muted"); ctx.font = "14px sans-serif"; ctx.fillText("None left with these numbers.", 0, 14); cv.style.height = "24px"; return; }
-    let y0 = 0;
-    groups.forEach((g, gi) => {
-      ctx.fillStyle = g.color;
-      const n = Math.round(g.n);
-      for (let i = 0; i < n; i++) {
-        const x = (i % cols) * step, y = y0 + Math.floor(i / cols) * step;
-        if (round) { ctx.beginPath(); ctx.arc(x + cell / 2, y + cell / 2, cell / 2, 0, Math.PI * 2); ctx.fill(); }
-        else ctx.fillRect(x, y, cell, cell);
-      }
-      y0 += rowsPer[gi] * step + groupGap;
+  function applyText() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const v = t(el.dataset.i18n); if (typeof v === "string") el.textContent = v;
     });
+    document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
   }
 
-  // Theme toggle
-  const btn = document.getElementById("themeBtn");
-  btn.addEventListener("click", () => {
+  document.querySelectorAll("[data-lang]").forEach(b => b.addEventListener("click", () => {
+    lang = b.dataset.lang; applyText(); render();
+  }));
+  document.getElementById("themeBtn").addEventListener("click", () => {
     const root = document.documentElement;
     const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
     root.dataset.theme = dark ? "light" : "dark";
-    render();
   });
 
-  window.addEventListener("resize", render);
-  render();
+  applyText(); render();
 })();
 </script>
 </body>
